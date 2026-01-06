@@ -1,25 +1,27 @@
 FROM php:8.1-apache
 
-# --- BAGIAN PERBAIKAN (HARD DELETE) ---
-# Kita hapus manual file konfigurasi mpm_event dan mpm_worker
-# agar Apache TIDAK MUNGKIN bisa memuatnya.
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.load \
-    && rm -f /etc/apache2/mods-enabled/mpm_event.conf \
-    && rm -f /etc/apache2/mods-enabled/mpm_worker.load \
-    && rm -f /etc/apache2/mods-enabled/mpm_worker.conf
+# Update sistem dan install tools dasar (opsional tapi bagus)
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
 
-# Aktifkan mpm_prefork (satu-satunya engine yang kita mau)
-RUN a2enmod mpm_prefork
+# --- FIX APACHE MPM (SOLUSI NUKLIR) ---
+# 1. Hapus paksa semua symlink MPM yang ada di folder enabled
+# 2. Aktifkan HANYA mpm_prefork
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load \
+    && rm -f /etc/apache2/mods-enabled/mpm_*.conf \
+    && a2enmod mpm_prefork
 
-# --- BAGIAN STANDAR ---
-# Install ekstensi agar bisa konek database
+# --- CONFIG STANDAR ---
+# Install ekstensi MySQL
 RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
 
 # Aktifkan mod_rewrite
 RUN a2enmod rewrite
 
-# Copy file website kamu
+# Copy file
 COPY . /var/www/html/
 
-# Atur hak akses agar bisa upload file
+# Atur hak akses
 RUN chown -R www-data:www-data /var/www/html/
