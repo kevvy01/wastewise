@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  # Service 1: Web Server (Aplikasi Kamu)
+  website:
+    build: .
+    ports:
+      - "8080:80" # Kita pakai port 8080 biar gak bentrok sama XAMPP
+    depends_on:
+      - db
+    volumes:
+      - .:/var/www/html # Agar kalau edit kodingan, langsung berubah tanpa restart
+
+  # Service 2: Database MySQL
+  db:
+    image: mysql:8.0
+    container_name: wastewise_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root # Password database
+      MYSQL_DATABASE: wastewise # Otomatis buat database kosong
+    volumes:
+      - db_data:/var/lib/mysql # Biar data gak hilang kalau docker dimatikan
+
+  # Service 3: phpMyAdmin (Biar gampang import SQL kayak di XAMPP)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+    depends_on:
+      - db
+
+volumes:
+  db_data:
