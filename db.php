@@ -1,26 +1,29 @@
 <?php
-session_start(); // Tetap dipertahankan agar Login jalan
+session_start();
 
-// Konfigurasi Database
-$dbname = "wastewise";
-$username = "root";
+// Cek apakah ada variabel 'MYSQLHOST' (Tanda-tanda kita lagi di Railway)
+if (getenv('MYSQLHOST')) {
+    // --- SETTINGAN RAILWAY (ONLINE) ---
+    $host = getenv('MYSQLHOST');
+    $user = getenv('MYSQLUSER');
+    $pass = getenv('MYSQLPASSWORD');
+    $db   = getenv('MYSQLDATABASE');
+    $port = getenv('MYSQLPORT');
 
-// --- OPSI 1: Coba Konek ke DOCKER ---
-// Host: 'db' (nama service di docker-compose)
-// Pass: 'root' (password standar di docker-compose)
-// Kita pakai tanda '@' supaya kalau gagal gak muncul error jelek
-$conn = @mysqli_connect("db", $username, "root", $dbname);
-
-// --- OPSI 2: Fallback ke XAMPP/LOCAL ---
-// Jika koneksi Docker gagal (hasilnya false), kita coba cara lama
-if (!$conn) {
-    // Host: 'localhost'
-    // Pass: '' (kosong, default XAMPP)
-    $conn = mysqli_connect("localhost", $username, "", $dbname);
+    $conn = mysqli_connect($host, $user, $pass, $db, $port);
+} else {
+    // --- SETTINGAN LOKAL (DOCKER / XAMPP) ---
+    // Coba Docker dulu ('db')
+    $conn = @mysqli_connect("db", "root", "root", "wastewise");
+    
+    // Kalau gagal, coba XAMPP ('localhost')
+    if (!$conn) {
+        $conn = mysqli_connect("localhost", "root", "", "wastewise");
+    }
 }
 
-// --- Pengecekan Terakhir ---
+// Cek error
 if (!$conn) {
-    die("Koneksi gagal (Baik Docker maupun Localhost tidak bisa): " . mysqli_connect_error());
+    die("Koneksi Gagal: " . mysqli_connect_error());
 }
 ?>
